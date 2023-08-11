@@ -13,6 +13,8 @@ import warnings
 import contextlib
 import torch
 from distutils.version import LooseVersion
+from pkg_resources import parse_version
+_use_pytorch_1_11_api = parse_version(torch.__version__) >= parse_version('1.11.0a')
 
 # pylint: disable=redefined-builtin
 # pylint: disable=arguments-differ
@@ -48,6 +50,9 @@ def conv_transpose2d(input, weight, bias=None, stride=1, padding=0, output_paddi
 def _should_use_custom_op(input):
     assert isinstance(input, torch.Tensor)
     if (not enabled) or (not torch.backends.cudnn.enabled):
+        return False
+    if _use_pytorch_1_11_api:
+        # The work-around code doesn't work on PyTorch 1.11.0 onwards
         return False
     if input.device.type != 'cuda':
         return False
